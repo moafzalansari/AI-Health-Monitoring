@@ -5,8 +5,8 @@
 | S. No. | Name | Role | Main Responsibility |
 |--------|------|------|---------------------|
 | 1 | **Mo Afzal Ansari** | AI + Research | ML, Personalized Baseline, Anomaly Detection, Research Paper |
-| 2 | **Vishal Mali** | Hardware + IoT | ESP32, MAX30102, SpO₂/HR, Temperature, MPU6050 |
-| 3 | **Abhishek Chaurasia** | Full-Stack Development | Flutter App, Backend/API, Database, Integration |
+| 2 | **Abhishek Chaurasia** | Hardware + IoT | ESP32, MAX30102, SpO₂/HR, Temperature, MPU6050 |
+| 3 | **Vishal Mali** | Full-Stack Development | Flutter App, Backend/API, Database, Integration |
 | 4 | **Kaushal Pandey** | Data + Testing | Dataset, Preprocessing Support, Testing, Evaluation, Documentation |
 
 ---
