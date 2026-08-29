@@ -1,20 +1,21 @@
+import random
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # <-- 1. Yeh import add karo
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
 
 app = FastAPI(title="AI Health Monitoring API", version="1.0")
 
-# <-- 2. Yeh CORS middleware add karo taaki Flutter Web data le sake
+# CORS middleware for Flutter Web
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Sabhi origins allow hain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Temporary in-memory storage (Aage hum isko Database se connect karenge)
+# In-memory storage with initial values
 latest_vitals = {
     "heart_rate": 78,
     "spo2": 98,
@@ -47,4 +48,11 @@ def upload_vitals(data: VitalsData):
 
 @app.get("/api/vitals/latest")
 def get_latest_vitals():
+    global latest_vitals
+    # 🔥 Yahan humne live fluctuation add kar diya hai taaki UI par numbers badle hue dikhein
+    latest_vitals["heart_rate"] = random.randint(72, 92)
+    latest_vitals["spo2"] = random.randint(95, 99)
+    latest_vitals["temperature"] = round(random.uniform(97.8, 99.2), 1)
+    latest_vitals["timestamp"] = str(datetime.now())
+    
     return latest_vitals
