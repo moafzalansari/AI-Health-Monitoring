@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'login_screen.dart';
@@ -64,7 +65,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ==========================================
-// 1. HOME TAB (API Integrated for Live Vitals)
+// 1. HOME TAB (API Integrated with Auto-Polling)
 // ==========================================
 class HomeDashboardTab extends StatefulWidget {
   const HomeDashboardTab({Key? key}) : super(key: key);
@@ -81,11 +82,20 @@ class _HomeDashboardTabState extends State<HomeDashboardTab> {
     "fall_status": "Connecting..."
   };
   bool isLoading = true;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     fetchVitals();
+    // Har 3 seconds mein automatic background data fetch karega (Real-time IoT feel ke liye)
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) => fetchVitals());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Memory leak se bachne ke liye timer cancel karna zaroori hai
+    super.dispose();
   }
 
   // FastAPI backend se data fetch karne ka function
@@ -94,16 +104,20 @@ class _HomeDashboardTabState extends State<HomeDashboardTab> {
       final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/vitals/latest'));
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            vitalsData = jsonResponse['data'];
+            isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          vitalsData = jsonResponse['data'];
+          vitalsData["fall_status"] = "Server Error";
           isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        vitalsData["fall_status"] = "Server Error";
-        isLoading = false;
-      });
     }
   }
 
@@ -134,7 +148,7 @@ class _HomeDashboardTabState extends State<HomeDashboardTab> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Color(0xFF00F2FE)),
-            onPressed: fetchVitals, // Refresh button se naya data aayega
+            onPressed: fetchVitals,
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white60),
@@ -166,9 +180,9 @@ class _HomeDashboardTabState extends State<HomeDashboardTab> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text("PERSONAL HEALTH SCORE", style: TextStyle(color: Colors.white60, fontSize: 11, letterSpacing: 1.2)),
                       SizedBox(height: 6),
                       Text("94 / 100", style: TextStyle(color: Color(0xFF00F2FE), fontSize: 28, fontWeight: FontWeight.bold)),
@@ -212,7 +226,7 @@ class _HomeDashboardTabState extends State<HomeDashboardTab> {
               childAspectRatio: 1.5,
               children: [
                 VitalCard(title: "HEART RATE", value: "${vitalsData['heart_rate']} BPM", subtitle: "Normal Range", icon: Icons.favorite, color: Colors.redAccent),
-                VitalCard(title: "SPO2 LEVEL", value: "${vitalsData['spo2']} %", subtitle: "High Oxygen", icon: Icons.air, color: Color(0xFF00F2FE)),
+                VitalCard(title: "SPO2 LEVEL", value: "${vitalsData['spo2']} %", subtitle: "High Oxygen", icon: Icons.air, color: const Color(0xFF00F2FE)),
                 VitalCard(title: "BODY TEMP", value: "${vitalsData['body_temp']} °F", subtitle: "Normal", icon: Icons.thermostat, color: Colors.orangeAccent),
                 VitalCard(title: "FALL STATUS", value: "${vitalsData['fall_status']}", subtitle: "Sensor Status", icon: Icons.accessibility_new, color: Colors.greenAccent),
               ],
@@ -294,8 +308,8 @@ class AnalyticsTab extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white12),
               ),
-              child: Column(
-                children: const [
+              child: const Column(
+                children: [
                   SummaryRow(title: "Sleep Duration", value: "7 hrs 45 mins", icon: Icons.nightlight_round),
                   Divider(color: Colors.white12, height: 20),
                   SummaryRow(title: "Step Count", value: "8,432 steps", icon: Icons.directions_walk),
@@ -340,9 +354,9 @@ class AIInsightsTab extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: const Color(0xFF00F2FE).withOpacity(0.3)),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Row(
                     children: [
                       Icon(Icons.psychology, color: Color(0xFF00F2FE)),
@@ -447,8 +461,8 @@ class ProfileTab extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white12),
               ),
-              child: Column(
-                children: const [
+              child: const Column(
+                children: [
                   ListTile(
                     leading: Icon(Icons.email_outlined, color: Color(0xFF00F2FE)),
                     title: Text("Email", style: TextStyle(color: Colors.white60, fontSize: 12)),
@@ -596,7 +610,8 @@ class AIExplanationCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(desc, style: const TextStyle(color: Colors.white60, fontSize: 12, height: 1.3)),
-        ],
+        ,
+      ],
       ),
     );
   }
@@ -612,7 +627,6 @@ class AlertTimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Building alert card");
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -632,7 +646,7 @@ class AlertTimelineCard extends StatelessWidget {
             child: Icon(icon, color: statusColor, size: 20),
           ),
           const SizedBox(width: 14),
-      Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

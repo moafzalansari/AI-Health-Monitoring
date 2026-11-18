@@ -34,3 +34,10 @@ Thumbs.db
 # Secrets
 *.pem
 *.key
+healthnova.db
+.env
+__pycache__/
+venv/
+.venv/
+build/
+.dart_tool/
